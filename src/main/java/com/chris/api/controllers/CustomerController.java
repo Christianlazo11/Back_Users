@@ -1,7 +1,7 @@
 package com.chris.api.controllers;
 
-import com.chris.api.models.entity.Customer;
-import com.chris.api.models.services.ICustomerService;
+import com.chris.api.entities.Customer;
+import com.chris.api.service.ICustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @CrossOrigin(origins = {"http://localhost:4200"})
 @RestController
@@ -27,7 +28,7 @@ public class CustomerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> show(@PathVariable Long id) {
-        Customer customer = null;
+        Optional<Customer> customer;
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -38,17 +39,17 @@ public class CustomerController {
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        if(customer == null) {
+        if(!customer.isPresent()) {
             response.put("message", "El cliente ID: ".concat(id.toString()).concat(" No existe en la base de datos"));
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<Customer>(customer, HttpStatus.OK);
+        return new ResponseEntity<Customer>(customer.get(), HttpStatus.OK);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> create(@RequestBody Customer customer) {
-        Customer newCustomer = null;
+        Optional<Customer> newCustomer;
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -67,23 +68,23 @@ public class CustomerController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> update(@RequestBody Customer customer, @PathVariable Long id) {
-        Customer currentCustomer = customerService.findById(id);
-        Customer customerUpdate = null;
+        Optional<Customer> currentCustomer = customerService.findById(id);
+        Optional<Customer> customerUpdate;
         Map<String, Object> response = new HashMap<>();
 
-        if(currentCustomer == null) {
+        if(!currentCustomer.isPresent()) {
             response.put("message", "Error: no se pudo editar, el cliente ID: ".concat(id.toString()
                     .concat(" No existe en la base de datos")));
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
         }
 
         try {
-            currentCustomer.setName(customer.getName());
-            currentCustomer.setLastName(customer.getLastName());
-            currentCustomer.setEmail(customer.getEmail());
-            currentCustomer.setCreateAt(customer.getCreateAt());
+            currentCustomer.get().setName(customer.getName());
+            currentCustomer.get().setLastName(customer.getLastName());
+            currentCustomer.get().setEmail(customer.getEmail());
+            currentCustomer.get().setCreateAt(customer.getCreateAt());
 
-            customerUpdate = customerService.save(currentCustomer);
+            customerUpdate = customerService.save(currentCustomer.get());
 
         } catch (DataAccessException e) {
             response.put("message", "Error al actualizar el cliente en la base de datos");
@@ -102,9 +103,9 @@ public class CustomerController {
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
 
-        Customer currentCustomer = customerService.findById(id);
+        Optional<Customer> currentCustomer = customerService.findById(id);
 
-        if(currentCustomer == null) {
+        if(!currentCustomer.isPresent()) {
             response.put("message", "Error: no se pudo eliminar, el cliente ID: ".concat(id.toString()
                     .concat(" No existe en la base de datos")));
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
