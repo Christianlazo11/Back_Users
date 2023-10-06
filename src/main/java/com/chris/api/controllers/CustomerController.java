@@ -33,12 +33,13 @@ public class CustomerController {
 
         try {
             customer = customerService.findById(id);
+
         } catch (DataAccessException e) {
             response.put("message", "Error al realizar la consulta en la base de datos");
             response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().toString()));
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
+        System.out.println(customer);
         if(!customer.isPresent()) {
             response.put("message", "El cliente ID: ".concat(id.toString()).concat(" No existe en la base de datos"));
             return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
