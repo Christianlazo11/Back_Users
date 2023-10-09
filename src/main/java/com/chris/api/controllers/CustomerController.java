@@ -2,12 +2,16 @@ package com.chris.api.controllers;
 
 import com.chris.api.models.entity.Customer;
 import com.chris.api.models.services.ICustomerService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +51,22 @@ public class CustomerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<?> create(@RequestBody Customer customer) {
+    public ResponseEntity<?> create(@Valid @RequestBody Customer customer, BindingResult result) {
         Customer newCustomer = null;
+        System.out.println(customer);
         Map<String, Object> response = new HashMap<>();
 
+        if(result.hasErrors()) {
+
+            List<String> errors = result.getFieldErrors()
+                            .stream()
+                            .map(err -> "El campo ' " + err.getField() +" ' " + err.getDefaultMessage())
+                            .toList();
+
+            response.put("error", errors);
+
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+        }
         try {
             newCustomer = customerService.save(customer);
         } catch (DataAccessException e) {
@@ -66,10 +82,20 @@ public class CustomerController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<?> update(@RequestBody Customer customer, @PathVariable Long id) {
+    public ResponseEntity<?> update(@Valid @RequestBody Customer customer, @PathVariable Long id, BindingResult result) {
         Customer currentCustomer = customerService.findById(id);
         Customer customerUpdate = null;
         Map<String, Object> response = new HashMap<>();
+
+        if(result.hasErrors()) {
+            List<String> errors = result.getFieldErrors()
+                    .stream()
+                    .map(err -> "El campo ' " + err.getField() +" ' " + err.getDefaultMessage())
+                    .toList();
+
+            response.put("error", errors);
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
+        }
 
         if(currentCustomer == null) {
             response.put("message", "Error: no se pudo editar, el cliente ID: ".concat(id.toString()
